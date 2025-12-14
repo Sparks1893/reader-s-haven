@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Grid3X3, List, Search, Plus, Filter, SlidersHorizontal } from 'lucide-react';
+import { Grid3X3, List, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BookCard } from '@/components/BookCard';
-import { mockBooks } from '@/data/mockData';
+import { AddBookModal } from '@/components/AddBookModal';
+import { useLibraryContext } from '@/contexts/LibraryContext';
 
 export function LibrarySection() {
+  const { books, addBook } = useLibraryContext();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const statuses = [
     { id: 'all', label: 'All Books' },
@@ -19,7 +22,7 @@ export function LibrarySection() {
     { id: 'paused', label: 'Paused' },
   ];
 
-  const filteredBooks = mockBooks.filter((book) => {
+  const filteredBooks = books.filter((book) => {
     const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || book.status === statusFilter;
@@ -33,10 +36,10 @@ export function LibrarySection() {
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">My Library</h1>
           <p className="text-muted-foreground mt-1">
-            {mockBooks.length} books in your collection
+            {books.length} books in your collection
           </p>
         </div>
-        <Button variant="amber" className="gap-2">
+        <Button variant="amber" className="gap-2" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Add Book
         </Button>
@@ -117,6 +120,13 @@ export function LibrarySection() {
           <p className="text-muted-foreground">No books found matching your criteria.</p>
         </div>
       )}
+
+      {/* Add Book Modal */}
+      <AddBookModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddBook={addBook}
+      />
     </div>
   );
 }
