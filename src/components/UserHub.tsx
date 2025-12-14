@@ -7,6 +7,7 @@ import { AchievementsSection } from '@/components/sections/AchievementsSection';
 import { CommunitySection } from '@/components/sections/CommunitySection';
 import { RecommendationsSection } from '@/components/sections/RecommendationsSection';
 import { SeriesSection } from '@/components/sections/SeriesSection';
+import { LibraryProvider } from '@/contexts/LibraryContext';
 
 export function UserHub() {
   const [activeSection, setActiveSection] = useState('overview');
@@ -33,16 +34,18 @@ export function UserHub() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <AppSidebar 
-        activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
-      />
-      <main className="flex-1 overflow-x-hidden">
-        <div className="container max-w-7xl py-8 px-4 lg:px-8 pt-16 lg:pt-8">
-          {renderSection()}
-        </div>
-      </main>
-    </div>
+    <LibraryProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection} 
+        />
+        <main className="flex-1 overflow-x-hidden">
+          <div className="container max-w-7xl py-8 px-4 lg:px-8 pt-16 lg:pt-8">
+            {renderSection()}
+          </div>
+        </main>
+      </div>
+    </LibraryProvider>
   );
 }
