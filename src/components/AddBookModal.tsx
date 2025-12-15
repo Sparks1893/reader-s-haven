@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 interface BookResult {
   id: string;
   title: string;
@@ -199,17 +199,14 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                   </div>
                 </form>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-48 h-48 mx-auto bg-muted rounded-xl flex items-center justify-center mb-4 border-2 border-dashed border-border">
-                    <Camera className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    Camera barcode scanning coming soon!
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    For now, please use manual ISBN entry
-                  </p>
-                </div>
+                <BarcodeScanner
+                  onScan={(scannedIsbn) => {
+                    setIsbn(scannedIsbn);
+                    searchByISBN(scannedIsbn);
+                    setInputMode('manual');
+                  }}
+                  onError={(err) => setError(err)}
+                />
               )}
 
               {/* Error Message */}
