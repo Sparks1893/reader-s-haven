@@ -34,6 +34,7 @@ require_once READERS_HAVEN_PATH . 'includes/class-database.php';
 require_once READERS_HAVEN_PATH . 'includes/class-assets.php';
 require_once READERS_HAVEN_PATH . 'includes/class-api.php';
 require_once READERS_HAVEN_PATH . 'includes/class-admin.php';
+require_once __DIR__ . '/includes/class-page-installer.php';
 
 /**
  * Main plugin class
@@ -80,17 +81,16 @@ add_action( 'plugins_loaded', 'readers_haven_init' );
 /**
  * Plugin activation hook
  */
-function readers_haven_activate() {
-Readers_Haven_Database::create_tables();
-}
-
-register_activation_hook( __FILE__, 'readers_haven_activate' );
+register_activation_hook( __FILE__, function () {
+	Readers_Haven_Database::create_tables();
+	ReadersHaven_Page_Installer::install();
+} );
 
 /**
  * Plugin deactivation hook
  */
 function readers_haven_deactivate() {
-Readers_Haven_Database::drop_tables();
+	Readers_Haven_Database::drop_tables();
 }
 
 register_deactivation_hook( __FILE__, 'readers_haven_deactivate' );
