@@ -34,6 +34,7 @@ require_once READERS_HAVEN_PATH . 'includes/class-database.php';
 require_once READERS_HAVEN_PATH . 'includes/class-assets.php';
 require_once READERS_HAVEN_PATH . 'includes/class-api.php';
 require_once READERS_HAVEN_PATH . 'includes/class-admin.php';
+require_once READERS_HAVEN_PATH . 'includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-page-installer.php';
 
 /**
@@ -59,6 +60,7 @@ add_action( 'admin_enqueue_scripts', array( 'Readers_Haven_Assets', 'enqueue_adm
 add_action( 'rest_api_init', array( 'Readers_Haven_API', 'register_endpoints' ) );
 add_shortcode( 'readers-haven', array( $this, 'render_shortcode' ) );
 add_action( 'admin_menu', array( 'Readers_Haven_Admin', 'add_admin_menu' ) );
+Readers_Haven_Shortcodes::register();
 }
 
 /**
