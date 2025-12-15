@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, BookOpen, Loader2, Check, Camera, Keyboard, Layers, Trash2 } from 'lucide-react';
+import { X, Search, BookOpen, Loader2, Check, Camera, Keyboard, Layers, Trash2, Upload, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
@@ -31,9 +32,13 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [bookResult, setBookResult] = useState<BookResult | null>(null);
   const [error, setError] = useState('');
-  const [inputMode, setInputMode] = useState<'manual' | 'camera' | 'bulk'>('manual');
+  const [inputMode, setInputMode] = useState<'manual' | 'camera' | 'bulk' | 'import'>('manual');
   const [bulkBooks, setBulkBooks] = useState<BookResult[]>([]);
   const [bulkLoading, setBulkLoading] = useState<string[]>([]);
+  const [bulkIsbns, setBulkIsbns] = useState('');
+  const [failedIsbns, setFailedIsbns] = useState<string[]>([]);
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const fetchBookByISBN = async (searchIsbn: string): Promise<BookResult | null> => {
@@ -98,7 +103,6 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
   };
 
   const handleBulkScan = async (scannedIsbn: string) => {
-    // Check if already in the list
     if (bulkBooks.some(b => b.isbn === scannedIsbn)) {
       return;
     }
@@ -111,6 +115,120 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
     
     if (book) {
       setBulkBooks(prev => [...prev, book]);
+    }
+  };
+
+  const parseISBNs = (text: string): string[] => {
+    // Split by newlines, commas, semicolons, or whitespace
+    const parts = text.split(/[\n,;\s]+/);
+    
+    // Clean and validate each ISBN
+    const isbns: string[] = [];
+    for (const part of parts) {
+      const cleaned = part.replace(/[-\s]/g, '').trim();
+      if (/^(\d{10}|\d{13})$/.test(cleaned)) {
+        if (!isbns.includes(cleaned)) {
+          isbns.push(cleaned);
+        }
+      }
+    }
+    
+    return isbns;
+  };
+
+  const handleBulkImport = async () => {
+    const isbns = parseISBNs(bulkIsbns);
+    
+    if (isbns.length === 0) {
+      setError('No valid ISBNs found. Enter 10 or 13 digit ISBNs separated by commas, spaces, or new lines.');
+      return;
+    }
+
+    // Filter out already added ISBNs
+    const newIsbns = isbns.filter(isbn => !bulkBooks.some(b => b.isbn === isbn));
+    
+    if (newIsbns.length === 0) {
+      setError('All ISBNs have already been added.');
+      return;
+    }
+
+    setError('');
+    setFailedIsbns([]);
+    setImportProgress({ current: 0, total: newIsbns.length });
+    setBulkLoading(newIsbns);
+
+    const failed: string[] = [];
+    
+    // Process ISBNs in batches of 3 to avoid rate limiting
+    for (let i = 0; i < newIsbns.length; i += 3) {
+      const batch = newIsbns.slice(i, i + 3);
+      const results = await Promise.all(batch.map(fetchBookByISBN));
+      
+      results.forEach((book, index) => {
+        const currentIsbn = batch[index];
+        setBulkLoading(prev => prev.filter(isbn => isbn !== currentIsbn));
+        
+        if (book) {
+          setBulkBooks(prev => [...prev, book]);
+        } else {
+          failed.push(currentIsbn);
+        }
+      });
+      
+      setImportProgress({ current: Math.min(i + 3, newIsbns.length), total: newIsbns.length });
+      
+      // Small delay between batches
+      if (i + 3 < newIsbns.length) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+
+    setImportProgress(null);
+    setBulkIsbns('');
+    
+    if (failed.length > 0) {
+      setFailedIsbns(failed);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    
+    // Try to extract ISBNs from CSV
+    // Look for columns that might contain ISBNs
+    const lines = text.split('\n');
+    const isbns: string[] = [];
+    
+    for (const line of lines) {
+      // Split by common CSV delimiters
+      const cells = line.split(/[,;\t]/);
+      
+      for (const cell of cells) {
+        const cleaned = cell.replace(/["'\s-]/g, '').trim();
+        if (/^(\d{10}|\d{13})$/.test(cleaned)) {
+          if (!isbns.includes(cleaned)) {
+            isbns.push(cleaned);
+          }
+        }
+      }
+    }
+    
+    if (isbns.length > 0) {
+      setBulkIsbns(isbns.join('\n'));
+      toast({
+        title: `${isbns.length} ISBNs found`,
+        description: 'Click "Import ISBNs" to fetch book data.',
+      });
+    } else {
+      setError('No valid ISBNs found in the file.');
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -140,7 +258,7 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
     bulkBooks.forEach(book => onAddBook(book));
     toast({
       title: `${bulkBooks.length} books added!`,
-      description: "All scanned books have been added to your library.",
+      description: "All books have been added to your library.",
     });
     handleClose();
   };
@@ -152,6 +270,9 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
     setInputMode('manual');
     setBulkBooks([]);
     setBulkLoading([]);
+    setBulkIsbns('');
+    setFailedIsbns([]);
+    setImportProgress(null);
     onClose();
   };
 
@@ -183,7 +304,7 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                   <BookOpen className="w-5 h-5 text-bookhive-forest" />
                 </div>
                 <h2 className="font-display text-xl font-semibold text-foreground">
-                  Add Book by ISBN
+                  Add Books
                 </h2>
               </div>
               <Button variant="ghost" size="icon" onClick={handleClose}>
@@ -211,7 +332,7 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                   className="gap-2"
                 >
                   <Camera className="w-4 h-4" />
-                  Single Scan
+                  Scan
                 </Button>
                 <Button
                   variant={inputMode === 'bulk' ? 'secondary' : 'ghost'}
@@ -221,6 +342,15 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                 >
                   <Layers className="w-4 h-4" />
                   Bulk Scan
+                </Button>
+                <Button
+                  variant={inputMode === 'import' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setInputMode('import')}
+                  className="gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Import
                 </Button>
               </div>
 
@@ -279,7 +409,6 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                     scannedCount={bulkBooks.length}
                   />
                   
-                  {/* Loading indicators */}
                   {bulkLoading.length > 0 && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -287,57 +416,123 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
                     </div>
                   )}
                   
-                  {/* Scanned books list */}
                   {bulkBooks.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-foreground">
-                          Scanned Books ({bulkBooks.length})
-                        </h3>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setBulkBooks([])}
-                          className="text-xs text-muted-foreground"
-                        >
-                          Clear all
-                        </Button>
+                    <BulkBooksList 
+                      books={bulkBooks} 
+                      onRemove={removeFromBulk} 
+                      onClear={() => setBulkBooks([])} 
+                    />
+                  )}
+                </div>
+              )}
+
+              {inputMode === 'import' && (
+                <div className="space-y-4">
+                  {/* File Upload */}
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full gap-2 h-20 border-dashed"
+                    >
+                      <Upload className="w-5 h-5" />
+                      <div className="text-left">
+                        <p className="font-medium">Upload CSV or TXT file</p>
+                        <p className="text-xs text-muted-foreground">
+                          File should contain ISBNs
+                        </p>
                       </div>
-                      <ScrollArea className="max-h-[200px]">
-                        <div className="space-y-2">
-                          {bulkBooks.map((book) => (
-                            <motion.div
-                              key={book.isbn}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg"
-                            >
-                              <img
-                                src={book.coverUrl}
-                                alt={book.title}
-                                className="w-10 h-14 object-cover rounded shadow-soft"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {book.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {book.authors.join(', ')}
-                                </p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                                onClick={() => removeFromBulk(book.isbn)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </ScrollArea>
+                    </Button>
+                  </div>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-border" />
                     </div>
+                    <div className="relative flex justify-center">
+                      <span className="bg-card px-2 text-xs text-muted-foreground">or paste ISBNs</span>
+                    </div>
+                  </div>
+
+                  {/* Text Input */}
+                  <div>
+                    <Textarea
+                      placeholder="Paste ISBNs here (one per line, or separated by commas)&#10;&#10;Example:&#10;978-0-316-76948-8&#10;9780743273565&#10;0-14-028329-X"
+                      value={bulkIsbns}
+                      onChange={(e) => setBulkIsbns(e.target.value)}
+                      className="min-h-[120px] font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Supports ISBN-10 and ISBN-13 formats, with or without dashes
+                    </p>
+                  </div>
+
+                  {/* Import Button */}
+                  <Button
+                    variant="amber"
+                    onClick={handleBulkImport}
+                    disabled={!bulkIsbns.trim() || bulkLoading.length > 0}
+                    className="w-full gap-2"
+                  >
+                    {bulkLoading.length > 0 ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {importProgress 
+                          ? `Importing ${importProgress.current}/${importProgress.total}...`
+                          : 'Importing...'
+                        }
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4" />
+                        Import ISBNs
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Progress bar */}
+                  {importProgress && (
+                    <div className="space-y-1">
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-bookhive-amber"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {importProgress.current} of {importProgress.total} processed
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Failed ISBNs */}
+                  {failedIsbns.length > 0 && (
+                    <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <div className="flex items-center gap-2 text-sm text-destructive mb-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {failedIsbns.length} ISBN{failedIsbns.length > 1 ? 's' : ''} not found
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {failedIsbns.join(', ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Imported books list */}
+                  {bulkBooks.length > 0 && (
+                    <BulkBooksList 
+                      books={bulkBooks} 
+                      onRemove={removeFromBulk} 
+                      onClear={() => setBulkBooks([])} 
+                    />
                   )}
                 </div>
               )}
@@ -354,7 +549,7 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
               )}
 
               {/* Single Book Result (for manual/single camera mode) */}
-              {bookResult && inputMode !== 'bulk' && (
+              {bookResult && (inputMode === 'manual' || inputMode === 'camera') && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -407,7 +602,7 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              {inputMode === 'bulk' ? (
+              {(inputMode === 'bulk' || inputMode === 'import') ? (
                 <Button
                   variant="amber"
                   onClick={handleAddAllToLibrary}
@@ -433,5 +628,68 @@ export function AddBookModal({ isOpen, onClose, onAddBook }: AddBookModalProps) 
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+// Extracted component for the bulk books list
+function BulkBooksList({ 
+  books, 
+  onRemove, 
+  onClear 
+}: { 
+  books: BookResult[]; 
+  onRemove: (isbn: string) => void; 
+  onClear: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-foreground">
+          Books to Add ({books.length})
+        </h3>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onClear}
+          className="text-xs text-muted-foreground"
+        >
+          Clear all
+        </Button>
+      </div>
+      <ScrollArea className="max-h-[200px]">
+        <div className="space-y-2">
+          {books.map((book) => (
+            <motion.div
+              key={book.isbn}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg"
+            >
+              <img
+                src={book.coverUrl}
+                alt={book.title}
+                className="w-10 h-14 object-cover rounded shadow-soft"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {book.title}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {book.authors.join(', ')}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                onClick={() => onRemove(book.isbn)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
