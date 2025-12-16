@@ -77,15 +77,15 @@ export default function WordPress() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <OverviewSection books={books} />
+            <OverviewSection onSectionChange={() => {}} />
           </TabsContent>
 
           <TabsContent value="library" className="space-y-4">
-            <LibrarySection books={books} setBooks={setBooks} />
+            <LibrarySection />
           </TabsContent>
 
           <TabsContent value="achievements" className="space-y-4">
-            <AchievementsSection books={books} />
+            <AchievementsSection />
           </TabsContent>
 
           <TabsContent value="recommendations" className="space-y-4">
