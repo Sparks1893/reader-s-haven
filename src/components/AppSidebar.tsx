@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
   Heart,
   Trophy,
   Users,
-  BarChart3,
   Bookmark,
-  Search,
   Settings,
   LogOut,
   Menu,
@@ -20,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface SidebarProps {
   activeSection: string;
@@ -39,6 +38,30 @@ const navItems = [
 export function AppSidebar({ activeSection, onSectionChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: 'Error signing out',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } else {
+      toast({
+        title: 'Signed out',
+        description: 'Come back soon!'
+      });
+    }
+  };
+
+  const userInitials = user?.user_metadata?.display_name
+    ? user.user_metadata.display_name.slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() || 'U';
+
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Reader';
 
   const SidebarContent = () => (
     <>
@@ -96,33 +119,47 @@ export function AppSidebar({ activeSection, onSectionChange }: SidebarProps) {
       {/* User Profile */}
       <div className={cn(
         "border-t border-sidebar-border p-4",
-        isCollapsed ? "flex justify-center" : ""
+        isCollapsed ? "flex flex-col items-center gap-2" : ""
       )}>
         {isCollapsed ? (
-          <Avatar className="h-9 w-9 ring-2 ring-sidebar-border">
-            <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" />
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
+          <>
+            <Avatar className="h-9 w-9 ring-2 ring-sidebar-border">
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground text-xs">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </>
         ) : (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9 ring-2 ring-sidebar-border">
-              <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground text-xs">
+                {userInitials}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                Jane Doe
+                {displayName}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
-                @janereads
+                {user?.email}
               </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={handleSignOut}
+              className="h-8 w-8 text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10"
+              title="Sign out"
             >
-              <Settings className="h-4 w-4" />
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         )}
