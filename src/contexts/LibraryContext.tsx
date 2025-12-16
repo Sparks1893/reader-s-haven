@@ -17,12 +17,14 @@ interface BookResult {
 interface LibraryContextType {
   books: Book[];
   wishlist: Book[];
+  isLoading: boolean;
   addBook: (book: BookResult) => void;
   removeBook: (bookId: string) => void;
   updateBookStatus: (bookId: string, status: Book['status']) => void;
   toggleFavorite: (bookId: string) => void;
   addToWishlist: (book: BookResult) => void;
   removeFromWishlist: (bookId: string) => void;
+  updateBookRating: (bookId: string, rating: number) => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | null>(null);

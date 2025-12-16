@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      books: {
+        Row: {
+          author: string
+          cover_url: string | null
+          created_at: string
+          date_added: string
+          date_completed: string | null
+          date_started: string | null
+          genre: string | null
+          id: string
+          is_favorite: boolean
+          is_wishlisted: boolean
+          notes: string | null
+          pages_read: number | null
+          pages_total: number | null
+          rating: number | null
+          series: string | null
+          series_number: number | null
+          spice_rating: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author: string
+          cover_url?: string | null
+          created_at?: string
+          date_added?: string
+          date_completed?: string | null
+          date_started?: string | null
+          genre?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_wishlisted?: boolean
+          notes?: string | null
+          pages_read?: number | null
+          pages_total?: number | null
+          rating?: number | null
+          series?: string | null
+          series_number?: number | null
+          spice_rating?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          cover_url?: string | null
+          created_at?: string
+          date_added?: string
+          date_completed?: string | null
+          date_started?: string | null
+          genre?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_wishlisted?: boolean
+          notes?: string | null
+          pages_read?: number | null
+          pages_total?: number | null
+          rating?: number | null
+          series?: string | null
+          series_number?: number | null
+          spice_rating?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
