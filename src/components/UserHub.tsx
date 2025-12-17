@@ -7,6 +7,7 @@ import { AchievementsSection } from '@/components/sections/AchievementsSection';
 import { CommunitySection } from '@/components/sections/CommunitySection';
 import { RecommendationsSection } from '@/components/sections/RecommendationsSection';
 import { SeriesSection } from '@/components/sections/SeriesSection';
+import { StatsSection } from '@/components/sections/StatsSection';
 import { LibraryProvider } from '@/contexts/LibraryContext';
 
 export function UserHub() {
@@ -18,6 +19,8 @@ export function UserHub() {
         return <OverviewSection onSectionChange={setActiveSection} />;
       case 'library':
         return <LibrarySection />;
+      case 'stats':
+        return <StatsSection />;
       case 'wishlist':
         return <WishlistSection />;
       case 'series':
