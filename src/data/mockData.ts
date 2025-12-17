@@ -13,6 +13,8 @@ export const mockBooks: Book[] = [
     dateAdded: '2024-01-15',
     isFavorite: true,
     isWishlisted: false,
+    pagesRead: 180,
+    pagesTotal: 387,
   },
   {
     id: '2',
@@ -28,6 +30,8 @@ export const mockBooks: Book[] = [
     dateCompleted: '2024-02-01',
     isFavorite: true,
     isWishlisted: false,
+    pagesRead: 419,
+    pagesTotal: 419,
   },
   {
     id: '3',
@@ -42,6 +46,8 @@ export const mockBooks: Book[] = [
     dateCompleted: '2024-01-20',
     isFavorite: false,
     isWishlisted: false,
+    pagesRead: 398,
+    pagesTotal: 398,
   },
   {
     id: '4',
@@ -53,6 +59,8 @@ export const mockBooks: Book[] = [
     dateAdded: '2024-02-01',
     isFavorite: false,
     isWishlisted: false,
+    pagesRead: 0,
+    pagesTotal: 496,
   },
   {
     id: '5',
@@ -66,6 +74,8 @@ export const mockBooks: Book[] = [
     dateAdded: '2024-01-25',
     isFavorite: false,
     isWishlisted: false,
+    pagesRead: 156,
+    pagesTotal: 389,
   },
   {
     id: '6',
@@ -81,6 +91,8 @@ export const mockBooks: Book[] = [
     dateCompleted: '2023-12-28',
     isFavorite: true,
     isWishlisted: false,
+    pagesRead: 528,
+    pagesTotal: 528,
   },
 ];
 
@@ -96,6 +108,8 @@ export const mockWishlist: Book[] = [
     dateAdded: '2024-02-10',
     isFavorite: false,
     isWishlisted: true,
+    pagesRead: 0,
+    pagesTotal: 623,
   },
   {
     id: 'w2',
@@ -107,6 +121,8 @@ export const mockWishlist: Book[] = [
     dateAdded: '2024-02-08',
     isFavorite: false,
     isWishlisted: true,
+    pagesRead: 0,
+    pagesTotal: 400,
   },
 ];
 

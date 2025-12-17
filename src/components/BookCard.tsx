@@ -3,6 +3,9 @@ import { Heart, Star, Flame, MoreHorizontal } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types/book';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { ReadingProgressTracker } from '@/components/ReadingProgressTracker';
+import { useLibraryContext } from '@/contexts/LibraryContext';
 import { cn } from '@/lib/utils';
 
 interface BookCardProps {
@@ -19,7 +22,9 @@ const statusConfig: Record<ReadingStatus, { label: string; variant: 'reading' | 
 };
 
 export function BookCard({ book, view = 'grid' }: BookCardProps) {
+  const { updateReadingProgress } = useLibraryContext();
   const statusInfo = statusConfig[book.status];
+  const progressPercentage = book.pagesTotal > 0 ? Math.round((book.pagesRead / book.pagesTotal) * 100) : 0;
 
   if (view === 'list') {
     return (
@@ -42,6 +47,18 @@ export function BookCard({ book, view = 'grid' }: BookCardProps) {
             <p className="text-xs text-muted-foreground mt-1">
               {book.series.name} #{book.series.number}
             </p>
+          )}
+          {/* Progress Bar for Reading books */}
+          {(book.status === 'reading' || book.status === 'paused') && book.pagesTotal > 0 && (
+            <div className="mt-2 max-w-xs">
+              <ReadingProgressTracker
+                bookId={book.id}
+                bookTitle={book.title}
+                pagesRead={book.pagesRead}
+                pagesTotal={book.pagesTotal}
+                onUpdateProgress={updateReadingProgress}
+              />
+            </div>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -99,6 +116,17 @@ export function BookCard({ book, view = 'grid' }: BookCardProps) {
           <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
         </div>
 
+        {/* Progress indicator on cover for reading books */}
+        {(book.status === 'reading' || book.status === 'paused') && book.pagesTotal > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm px-3 py-2">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-muted-foreground">{book.pagesRead}/{book.pagesTotal}</span>
+              <span className="font-medium text-foreground">{progressPercentage}%</span>
+            </div>
+            <Progress value={progressPercentage} className="h-1.5" />
+          </div>
+        )}
+
         {/* Hover Actions */}
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <Button variant="amber" className="w-full" size="sm">
@@ -118,6 +146,19 @@ export function BookCard({ book, view = 'grid' }: BookCardProps) {
           <p className="text-xs text-muted-foreground mb-3">
             {book.series.name} #{book.series.number}
           </p>
+        )}
+
+        {/* Progress Tracker for reading/paused books */}
+        {(book.status === 'reading' || book.status === 'paused') && book.pagesTotal > 0 && (
+          <div className="mb-3">
+            <ReadingProgressTracker
+              bookId={book.id}
+              bookTitle={book.title}
+              pagesRead={book.pagesRead}
+              pagesTotal={book.pagesTotal}
+              onUpdateProgress={updateReadingProgress}
+            />
+          </div>
         )}
 
         <div className="flex items-center justify-between">

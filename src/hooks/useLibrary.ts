@@ -31,6 +31,8 @@ function dbToBook(dbBook: BookDB): Book {
     notes: dbBook.notes ?? undefined,
     isFavorite: dbBook.is_favorite,
     isWishlisted: dbBook.is_wishlisted,
+    pagesRead: dbBook.pages_read ?? 0,
+    pagesTotal: dbBook.pages_total ?? 0,
   };
 }
 
@@ -133,6 +135,23 @@ export function useLibrary() {
     });
   }, [updateBookDB]);
 
+  const updateReadingProgress = useCallback((bookId: string, pagesRead: number) => {
+    const book = dbBooks.find(b => b.id === bookId);
+    const updates: { pages_read: number; status?: BookDB['status']; date_completed?: string | null } = { 
+      pages_read: pagesRead 
+    };
+    
+    // Auto-update status based on progress
+    if (book?.pages_total && pagesRead >= book.pages_total) {
+      updates.status = 'completed';
+      updates.date_completed = new Date().toISOString();
+    } else if (pagesRead > 0 && book?.status === 'want-to-read') {
+      updates.status = 'reading';
+    }
+    
+    updateBookDB({ id: bookId, updates });
+  }, [dbBooks, updateBookDB]);
+
   return {
     books,
     wishlist,
@@ -144,5 +163,6 @@ export function useLibrary() {
     addToWishlist,
     removeFromWishlist,
     updateBookRating,
+    updateReadingProgress,
   };
 }
