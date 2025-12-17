@@ -18,6 +18,8 @@ export interface Book {
   notes?: string;
   isFavorite: boolean;
   isWishlisted: boolean;
+  pagesRead: number;
+  pagesTotal: number;
 }
 
 export interface Achievement {

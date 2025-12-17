@@ -25,6 +25,7 @@ interface LibraryContextType {
   addToWishlist: (book: BookResult) => void;
   removeFromWishlist: (bookId: string) => void;
   updateBookRating: (bookId: string, rating: number) => void;
+  updateReadingProgress: (bookId: string, pagesRead: number) => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | null>(null);
