@@ -12,7 +12,7 @@ export interface BookDB {
   genre: string | null;
   series: string | null;
   series_number: number | null;
-  status: 'reading' | 'completed' | 'want-to-read' | 'dnf';
+  status: string;
   rating: number | null;
   spice_rating: number | null;
   is_favorite: boolean;
