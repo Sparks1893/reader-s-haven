@@ -86,7 +86,7 @@ export function useLibrary() {
     updateBookDB({
       id: bookId,
       updates: {
-        status: dbStatus as BookDB['status'],
+        status: dbStatus,
         date_completed: status === 'completed' ? new Date().toISOString() : null,
         date_started: status === 'reading' ? new Date().toISOString() : undefined,
       }
@@ -137,7 +137,7 @@ export function useLibrary() {
 
   const updateReadingProgress = useCallback((bookId: string, pagesRead: number) => {
     const book = dbBooks.find(b => b.id === bookId);
-    const updates: { pages_read: number; status?: BookDB['status']; date_completed?: string | null } = { 
+    const updates: { pages_read: number; status?: string; date_completed?: string | null } = { 
       pages_read: pagesRead 
     };
     
