@@ -78,7 +78,7 @@ export function AppSidebar({ activeSection, onSectionChange }: SidebarProps) {
             animate={{ opacity: 1, x: 0 }}
             className="font-display text-xl font-bold text-sidebar-foreground"
           >
-            Bookhive
+            Bookshive
           </motion.div>
         )}
       </div>

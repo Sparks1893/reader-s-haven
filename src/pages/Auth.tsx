@@ -101,7 +101,7 @@ export default function Auth() {
     } else {
       toast({
         title: 'Account created!',
-        description: 'Welcome to Reader\'s Haven. Start building your library!'
+        description: 'Welcome to Bookshive. Start building your library!'
       });
       navigate('/');
     }
@@ -117,7 +117,7 @@ export default function Auth() {
               <BookOpen className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="text-3xl font-display font-bold text-foreground">
-              Reader's Haven
+              Bookshive
             </h1>
           </div>
           <p className="text-muted-foreground text-center">
@@ -188,7 +188,7 @@ export default function Auth() {
               <TabsContent value="signup" className="mt-0">
                 <CardTitle className="text-xl mb-1">Create an account</CardTitle>
                 <CardDescription className="mb-6">
-                  Join Reader's Haven and start tracking your books
+                  Join Bookshive and start tracking your books
                 </CardDescription>
                 
                 <form onSubmit={handleSignUp} className="space-y-4">
