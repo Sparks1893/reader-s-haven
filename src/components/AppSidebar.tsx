@@ -14,6 +14,7 @@ import {
   Sparkles,
   Home,
   BarChart3,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,6 +30,7 @@ interface SidebarProps {
 const navItems = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'library', label: 'My Library', icon: Library },
+  { id: 'goals', label: 'Reading Goals', icon: Target },
   { id: 'stats', label: 'Statistics', icon: BarChart3 },
   { id: 'wishlist', label: 'Wishlist', icon: Heart },
   { id: 'series', label: 'Series Tracker', icon: Bookmark },
