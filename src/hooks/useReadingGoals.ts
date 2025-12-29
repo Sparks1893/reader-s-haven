@@ -35,6 +35,8 @@ export function useReadingGoals() {
   }, [goals, user]);
 
   const setGoal = useCallback((goal: Omit<ReadingGoal, 'id'>) => {
+    if (!user) return;
+    
     setGoals(prev => {
       // Check if goal already exists for this type/period
       const existingIndex = prev.findIndex(g => 
@@ -55,11 +57,12 @@ export function useReadingGoals() {
       }
       return [...prev, newGoal];
     });
-  }, []);
+  }, [user]);
 
   const removeGoal = useCallback((goalId: string) => {
+    if (!user) return;
     setGoals(prev => prev.filter(g => g.id !== goalId));
-  }, []);
+  }, [user]);
 
   const getYearlyGoal = useCallback((year: number) => {
     return goals.find(g => g.goalType === 'yearly' && g.year === year);
